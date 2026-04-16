@@ -1,7 +1,9 @@
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
+  ActivityIndicator,
+  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -13,49 +15,73 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function LoginScreen() {
   const router = useRouter();
 
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "android" ? "height" : "padding"}
-      style={styles.keyboard}
-    >
-      <SafeAreaView edges={["top", "bottom"]} style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign In to Continue</Text>
-          <View style={styles.form}>
-            <TextInput
-              placeholder="Email..."
-              placeholderTextColor={"#999"}
-              keyboardType="email-address"
-              autoComplete="email"
-              autoCapitalize="none"
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Password..."
-              placeholderTextColor={"#999"}
-              autoComplete="password"
-              secureTextEntry
-              autoCapitalize="none"
-              style={styles.input}
-            />
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Sign In</Text>
-            </TouchableOpacity>
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassowrd] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const { signIn } = useAuth();
 
-            <TouchableOpacity
-              style={styles.linkButton}
-              onPress={() => router.push("/(auth)/signup")}
-            >
-              <Text style={styles.linkButtonText}>
-                Don't have an account?{" "}
-                <Text style={styles.linkText}>Sign Up</Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please full in all fields.");
+    }
+
+    setLoading(true);
+    try {
+      await signIn(email, password);
+      router.push("/(tabs)");
+    } catch (err) {
+      Alert.alert("Error", "Failed to sign in. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView edges={["top", "bottom"]} style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome Back.</Text>
+        <Text style={styles.subtitle}>Sign In to Continue.</Text>
+        <View style={styles.form}>
+          <TextInput
+            placeholder="Email..."
+            placeholderTextColor={"#999"}
+            keyboardType="email-address"
+            autoComplete="email"
+            autoCapitalize="none"
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+          />
+          <TextInput
+            placeholder="Password..."
+            placeholderTextColor={"#999"}
+            autoComplete="password"
+            secureTextEntry
+            autoCapitalize="none"
+            style={styles.input}
+            value={password}
+            onChangeText={setPassowrd}
+          />
+          <TouchableOpacity style={styles.button} onPress={handleSignIn}>
+            {loading ? (
+              <ActivityIndicator size={24} color={"#fff"} />
+            ) : (
+              <Text style={styles.buttonText}>Sign In</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => router.push("/(auth)/signup")}
+          >
+            <Text style={styles.linkButtonText}>
+              Don't have an account?{" "}
+              <Text style={styles.linkText}>Sign Up</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+      </View>
+    </SafeAreaView>
   );
 }
 
